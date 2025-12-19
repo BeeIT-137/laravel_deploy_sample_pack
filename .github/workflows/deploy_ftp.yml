@@ -1,49 +1,39 @@
-name: Laravel Deploy (all in public_html)
+name: Deploy to Shared Hosting (FTP)
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ "main" ]
 
 jobs:
   ftp-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: FTP Deploy to public_html
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      # Nếu repo KHÔNG chứa vendor (khuyến nghị), bạn cần build vendor trước khi deploy:
+      # - name: Setup PHP
+      #   uses: shivammathur/setup-php@v2
+      #   with:
+      #     php-version: '8.2'
+      # - name: Install dependencies
+      #   run: composer install --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Deploy (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-
-          protocol: ftp
-          port: 21
-
-          # Đẩy toàn bộ repo
-          local-dir: ./
-
-          # public_html trên host
-          server-dir: ${{ secrets.FTP_PATH }}
-
+          port: ${{ secrets.FTP_PORT }} # optional, default 21
+          protocol: ftp # or ftps if supported
+          local-dir: ./ # root of repo
+          server-dir: ${{ secrets.FTP_SERVER_DIR }} # example: /public_html/
           exclude: |
             **/.git*
-            **/.git*/**
             **/.github/**
-            **/.vscode/**
-            **/.idea/**
-            **/.DS_Store
-
-            # Không upload env (tạo trực tiếp trên host)
-            **/.env
-            **/.env.*
-
-            # dev
             **/node_modules/**
             **/tests/**
-            **/phpunit.xml
-            **/README*
+            **/.env
+            **/storage/logs/**
+            **/.DS_Store
