@@ -1,0 +1,3 @@
+# Place this inside: public_html/laravel_app/.htaccess
+# Blocks direct web access to everything in laravel_app (defense-in-depth).
+Require all denied

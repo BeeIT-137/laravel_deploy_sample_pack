@@ -1,0 +1,38 @@
+name: Deploy to Host (SSH + Rsync)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # Upload files (exclude .env)
+      - name: Rsync to server
+        run: |
+          rsync -az --delete             --exclude ".git*"             --exclude ".github/"             --exclude "node_modules/"             --exclude "tests/"             --exclude ".env"             -e "ssh -p ${{ secrets.SSH_PORT }}"             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SSH_TARGET_DIR }}
+
+      # Optional: run commands on server (composer install, cache config)
+      - name: Remote commands
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd "${SSH_TARGET_DIR:-$HOME}"
+          # Nếu host có composer:
+          # composer install --no-dev --prefer-dist --optimize-autoloader
+          # php artisan config:cache
+          # php artisan route:cache
+          EOF

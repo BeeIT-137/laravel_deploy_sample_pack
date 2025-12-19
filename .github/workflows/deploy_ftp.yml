@@ -1,0 +1,39 @@
+name: Deploy to Shared Hosting (FTP)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Nếu repo KHÔNG chứa vendor (khuyến nghị), bạn cần build vendor trước khi deploy:
+      # - name: Setup PHP
+      #   uses: shivammathur/setup-php@v2
+      #   with:
+      #     php-version: '8.2'
+      # - name: Install dependencies
+      #   run: composer install --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Deploy (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }} # optional, default 21
+          protocol: ftp # or ftps if supported
+          local-dir: ./ # root of repo
+          server-dir: ${{ secrets.FTP_SERVER_DIR }} # example: /public_html/
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/tests/**
+            **/.env
+            **/storage/logs/**
+            **/.DS_Store

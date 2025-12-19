@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Disable directory listing
+  Options -Indexes
+
+  # Security: block sensitive files
+  <FilesMatch "(^\.env$|^composer\.(json|lock)$|^phpunit\.xml$|^artisan$)">
+    Require all denied
+  </FilesMatch>
+
+  # Security: block common sensitive folders if accidentally exposed
+  RewriteRule ^laravel_app/ - [F,L]
+
+  # Laravel front controller
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.php [L]
+</IfModule>
